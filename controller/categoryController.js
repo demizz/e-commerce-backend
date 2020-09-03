@@ -5,6 +5,10 @@ const HttpError = require('../util/httpError');
 exports.createCategory = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
   const { name } = req.body;
+  const existingCategory = await Category.findOne({ name });
+  if (existingCategory) {
+    return next(new HttpError('This category is already exist', 401));
+  }
   const newCategory = await Category.create({ name });
   if (!newCategory) {
     return next(new HttpError('fail to create new category', 400));

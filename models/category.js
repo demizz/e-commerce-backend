@@ -7,6 +7,7 @@ const categorySchema = new mongoose.Schema(
       required: [true, 'a category must have a name'],
       trim: true,
       maxlength: 32,
+      unique: true,
     },
   },
   {
