@@ -5,32 +5,16 @@ const formidable = require('formidable');
 const fs = require('fs');
 const _ = require('lodash');
 exports.createProduct = catchAsync(async (req, res, next) => {
-  //   const userId = req.params.userId;
-  //   const {
-  //     name,
-  //     description,
-  //     price,
-  //     category,
-  //     quantity,
-  //     photo,
-  //     shipping,
-  //   } = req.body;
-  //   console.log(req.body);
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, async (err, fields, files) => {
     if (err) {
       return next(new HttpError('Image could not uploaded', 400));
     }
-    // console.log(fields);
-    // console.log(files.photo.path);
-    // console.log({
-    //   ...fields,
-    //   photo: {
-    //     data: fs.readFileSync(files.photo.path),
-    //     contentType: files.photo.type,
-    //   },
-    // });
+
+    if (!files.photo) {
+      return next(new HttpError('image is required', 400));
+    }
     if (files.photo.size > 1000000) {
       return next(new HttpError('image size must be less than 1MB', 400));
     }
@@ -63,7 +47,7 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 });
 exports.getProductById = catchAsync(async (req, res, next) => {
   const productId = req.params.productId;
-  const product = await Product.findById(productId);
+  const product = await Product.findById(productId).populate('category');
   if (!product) {
     return next(new HttpError('fail to found this product', 404));
   }
@@ -91,7 +75,7 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
     return next(new HttpError('fail to create this product', 400));
   }
   res.status(200).json({
-    status: 'succes',
+    status: 'success',
     message: 'product deleted successfully',
     deletedProduct: product,
   });
@@ -111,27 +95,31 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
       return next(new HttpError('Image could not uploaded', 400));
     }
 
-    if (files.photo.size > 1000000) {
-      return next(new HttpError('image size must be less than 1MB', 400));
-    }
-    if (
-      !fields.name ||
-      !fields.description ||
-      !fields.price ||
-      !fields.category ||
-      !fields.quantity ||
-      !fields.shipping
-    ) {
-      return next(new HttpError('all fields required', 400));
+    // if (files && files.photo.size > 1000000) {
+    //   return next(new HttpError('image size must be less than 1MB', 400));
+    // }
+    // if (
+    //   !fields.name ||
+    //   !fields.description ||
+    //   !fields.price ||
+    //   !fields.category ||
+    //   !fields.quantity ||
+    //   !fields.shipping
+    // ) {
+    //   return next(new HttpError('all fields required', 400));
+    // }
+    let photo = {};
+    if (files.photo) {
+      photo = {
+        data: fs.readFileSync(files.photo.path),
+        contentType: files.photo.type,
+      };
     }
     const newProduct = await Product.findByIdAndUpdate(
       productId,
       {
         ...fields,
-        photo: {
-          data: fs.readFileSync(files.photo.path),
-          contentType: files.photo.type,
-        },
+        photo,
       },
       {
         new: true,
@@ -152,10 +140,10 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 exports.list = catchAsync(async (req, res, next) => {
   let order = req.query.order ? req.query.order : 'asc';
   let sortBy = req.query.sortBy ? req.query.sortBy : '_id';
-  let limit = req.query.limit ? parseInt(req.query.limit) : 6;
+  let limit = req.query.limit ? parseInt(req.query.limit) : 100;
 
   const listProduct = await Product.find()
-    .select('-photo')
+    // .select('-photo')
     .populate('category')
     .sort([[sortBy, order]])
     .limit(limit);
@@ -165,6 +153,7 @@ exports.list = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     message: 'query success',
+    length: listProduct.length,
     listProduct,
   });
 });
@@ -220,14 +209,9 @@ exports.listBySearch = catchAsync(async (req, res, next) => {
   let skip = parseInt(req.body.skip);
   let findArgs = {};
 
-  // console.log(order, sortBy, limit, skip, req.body.filters);
-  // console.log("findArgs", findArgs);
-
   for (let key in req.body.filters) {
     if (req.body.filters[key].length > 0) {
       if (key === 'price') {
-        // gte -  greater than price [0-10]
-        // lte - less than
         findArgs[key] = {
           $gte: req.body.filters[key][0],
           $lte: req.body.filters[key][1],
@@ -259,12 +243,48 @@ exports.productPhoto = catchAsync(async (req, res, next) => {
   if (!findProduct) {
     return next(new HttpError('this product is not found', 404));
   }
+
   if (findProduct.photo.data) {
     res.set('Content-Type', findProduct.photo.contentType);
+
+    return res.send(findProduct.photo.data);
+  }
+});
+exports.querySearch = catchAsync(async (req, res, next) => {
+  const query = {};
+  if (req.query.search) {
+    query.name = { $regex: req.query.search, $options: 'i' };
+    if (req.query.category && req.query.category != 'All') {
+      query.category = req.query.category;
+    }
+    const list = await Product.find(query).select('-photo');
+    if (!list) {
+      return next(new HttpError('we can not found', 400));
+    }
     res.status(200).json({
       status: 'success',
-      photo: findProduct.photo.data,
+      list,
     });
   }
+});
+
+exports.decreaseQuantity = catchAsync(async (req, res, next) => {
+  // let bulkops=req.body.order.products.map((item)=>{
+  //   return {
+  //     updateOne:{
+  //       filter:{_id:item._id},
+  //       update:{$inc:{quantity:-item.count,sold:+item.count}}
+  //     }
+  //   }
+  // })
+  req.body.order.products.map(async (item) => {
+    const updateProduct = await Product.findByIdAndUpdate(
+      { _id: item._id },
+      { $inc: { quantity: -item.count, sold: +item.count } }
+    );
+    if (!updateProduct) {
+      return next(new HttpError('fail to update this product', 400));
+    }
+  });
   next();
 });

@@ -14,6 +14,10 @@ router
   .route('/:userId')
   .get(authController.requireSignin, userController.getUserById);
 router
+  .route('/orders/by/:userId')
+  .get(authController.requireSignin, userController.getListOfOrders);
+router
+
   .route('/update/:userId')
   .put(authController.requireSignin, userController.updateUserById);
 module.exports = router;

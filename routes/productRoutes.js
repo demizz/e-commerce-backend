@@ -12,8 +12,9 @@ router
 router.route('/list').get(productController.list);
 router.route('/related/:productId').get(productController.relatedList);
 router.route('/category').get(productController.listCategory);
-router.route('/by/seach').post(productController.listBySearch);
+router.route('/by/search').post(productController.listBySearch);
 router.route('/photo/:productId').get(productController.productPhoto);
+router.route('/search/').get(productController.querySearch);
 
 router
   .route('/:productId')
