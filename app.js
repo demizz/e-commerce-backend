@@ -6,6 +6,8 @@ const path = require('path');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
+
 const cors = require('cors');
 const authRoutes = require('./Routes/authRoutes');
 const userRoutes = require('./Routes/userRoutes');
@@ -13,8 +15,7 @@ const orderRoutes = require('./Routes/orderRoutes');
 const categoryRoutes = require('./Routes/categoryRoutes');
 const productRoutes = require('./Routes/productRoutes');
 const braintreeRoutes = require('./Routes/braintreeRoutes');
-const expressValidator = require('express-validator');
-const conf = dotenv.config({ path: './.env' });
+dotenv.config({ path: './.env' });
 const HttpError = require('./util/httpError');
 const DB = process.env.DATABASE.replace(
   '<password>',
@@ -31,10 +32,11 @@ mongoose
   .then((con) => {
     console.log('connection to DataBase successfully');
   });
-app.use(morgan('dev'));
+//app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(cookieParser());
-//app.use(expressValidator());
+app.use(express.urlencoded({ extended: true }));
+app.use(compression());
 app.use(cors());
 app.use('*', cors());
 
@@ -56,7 +58,7 @@ app.use((err, req, res, next) => {
     message: err.message || 'unkown error',
   });
 });
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`server start at port ${port}`);
