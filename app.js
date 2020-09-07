@@ -1,6 +1,5 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
 const dotenv = require('dotenv');
 const path = require('path');
 const morgan = require('morgan');
@@ -16,6 +15,7 @@ const productRoutes = require('./routes/productRoutes');
 const braintreeRoutes = require('./routes/braintreeRoutes');
 dotenv.config({ path: './.env' });
 const HttpError = require('./util/httpError');
+const app = express();
 const DB = process.env.DATABASE.replace(
   '<password>',
   process.env.DATABASE_PASSWORD
