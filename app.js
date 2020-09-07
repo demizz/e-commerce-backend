@@ -8,12 +8,12 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const cors = require('cors');
-const authRoutes = require('./Routes/authRoutes');
-const userRoutes = require('./Routes/userRoutes');
-const orderRoutes = require('./Routes/orderRoutes');
-const categoryRoutes = require('./Routes/categoryRoutes');
-const productRoutes = require('./Routes/productRoutes');
-const braintreeRoutes = require('./Routes/braintreeRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const braintreeRoutes = require('./routes/braintreeRoutes');
 dotenv.config({ path: './.env' });
 const HttpError = require('./util/httpError');
 const DB = process.env.DATABASE.replace(
