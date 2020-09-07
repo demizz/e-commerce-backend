@@ -6,7 +6,6 @@ const path = require('path');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const compression = require('compression');
 
 const cors = require('cors');
 const authRoutes = require('./Routes/authRoutes');
@@ -36,7 +35,7 @@ mongoose
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(compression());
+
 app.use(cors());
 app.use('*', cors());
 
