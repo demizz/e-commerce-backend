@@ -65,3 +65,9 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`server start at port ${port}`);
 });
+process.on('SIGTERM', () => {
+  console.log('SIGTERM recived shuttin down');
+  server.close(() => {
+    console.log('process terminated');
+  });
+});
