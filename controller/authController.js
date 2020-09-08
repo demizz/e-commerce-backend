@@ -10,11 +10,6 @@ const createToken = (id) => {
     expiresIn: process.env.EXPIRESIN,
   });
 };
-const cookieOptions = {
-  expires:
-    new Date(Date.now() + process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000,
-  httpOnly: true,
-};
 
 exports.signup = catchAsync(async (req, res, next) => {
   const { name, email, password, about, role, history } = req.body;
@@ -34,7 +29,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     return next(new HttpError('fail to create new User', 400));
   }
   token = createToken(newUser._id);
-  res.cookie('jwt', token, cookieOptions);
+
   res.status(201).json({
     status: 'success',
     message: 'new user created successfully',
@@ -61,6 +56,12 @@ exports.login = catchAsync(async (req, res, next) => {
       new HttpError('the password or the email are not correct', 401)
     );
   }
+  const cookieOptions = {
+    expires:
+      new Date(Date.now() + process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: req.secure || req.headers('x-forwarded-proto') === 'https',
+  };
   token = createToken(user._id);
   res.cookie('jwt', token, cookieOptions);
 
