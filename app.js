@@ -31,7 +31,9 @@ mongoose
   .then((con) => {
     console.log('connection to DataBase successfully');
   });
-//app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'developement') {
+  app.use(morgan('dev'));
+}
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -46,7 +48,7 @@ app.use('/api/v1/product', productRoutes);
 app.use('/api/v1/braintree', braintreeRoutes);
 app.use('/api/v1/order', orderRoutes);
 if (process.env.NODE_ENV === 'production') {
-  app.use('*', (req, res, next) => {
+  app.use((req, res, next) => {
     res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
   });
 }
